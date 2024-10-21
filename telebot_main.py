@@ -1,26 +1,28 @@
-import random
+import os
+import requests
+import asyncio
 from typing import Final
-from telebot import types
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 
 Token: Final = "6774761124:AAEBNfmTgmcJ6wbtL1zZKGAV0_xjifDmNfE"
 BOT_USERNAME: Final = "@panhathun_bot"
+FLASK_API_URL = "http://127.0.0.1:5000/upload"
 
-# Command
+# Create a directory to save images
+if not os.path.exists("images"):
+    os.makedirs("images")
+
+# Command handlers
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handles the /start command, presenting an outline keyboard."""
-
-    # Construct your keyboard outline
+    """Handles the /start command, presenting an outline keyboard and instructions."""
     keyboard = [
-      # Replace with the list of extracted titles
-        ["Video","Image", "Document", "Audio"]
+        ["Video", "Image", "Document", "Audio"]
     ]
-
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False)
 
     await update.message.reply_text(
-        "Please select an area of interest:",
+        "Welcome! Please select an area of interest or send me an image and I will save it.",
         reply_markup=reply_markup
     )
 
@@ -28,99 +30,42 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("I'm Thun Bot, here to assist you. You can ask me anything or use the available commands.")
 
 async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("You can contact me via:\n" \
-                                   "Facebook: https://www.facebook.com/profile.php?id=100026153991813&mibextid=9R9pXO\n" \
-                                    "Instagram: https://www.instagram.com/thun_nani?igsh=MTN4dmZ6cXkxM2EzMA==\n" \
-                                    "Telegram: t.me/nhacool\n" \
-                                    "Linkin: https://www.linkedin.com/in/duch-panhathun-406336235?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app\n" \
-                                    "Email: duchpanhathun@gmail.com")
+    await update.message.reply_text("You can contact me via: Telegram: t.me/nhacool")
+
 async def quiz_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    markup = types.InlineKeyboardMarkup(row_width=2)
+    keyboard = [
+        [InlineKeyboardButton('1 Kilo of iron', callback_data='answer_iron'),
+         InlineKeyboardButton('1 Kilo of cotton', callback_data='answer_cotton')],
+        [InlineKeyboardButton('1 Kilo of same', callback_data='answer_same'),
+         InlineKeyboardButton('No answer', callback_data='answer_no')]
+    ]
 
-    iron = types.InlineKeyboardButton('1 Kilo of iron', callback_data='answer_iron')
-    cotton = types.InlineKeyboardButton('1 Kilo of cotoon', callback_data='answer_cotoon')
-    same = types.InlineKeyboardButton('1 Kilo of same', callback_data='answer_same')
-    no_answer = types.InlineKeyboardButton('No answer', callback_data='answer_no')
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-    markup.add(iron, cotton, same, no_answer)
-
-    # Convert InlineKeyboardMarkup to its dictionary representation
-    markup_dict = markup.to_dict()
-
-    # Send the message with inline keyboard markup
-    await context.bot.send_message(chat_id=update.effective_chat.id, text='What is the hi?', reply_markup=markup_dict)
+    await update.message.reply_text('What is the heaviest?', reply_markup=reply_markup)
 
 # Callback handler for answer
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await answer(update, context)
-
-async def answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    await query.answer()
+
     if query.data == 'answer_same':
-        await context.bot.send_message(chat_id=query.message.chat_id, text="Congratulations!")
+        await query.edit_message_text(text="Congratulations!")
     else:
-        await context.bot.send_message(chat_id=query.message.chat_id, text="Try Again...")
+        await query.edit_message_text(text="Try Again...")
 
     # Edit the original message to remove the inline keyboard markup
     await query.message.edit_reply_markup(reply_markup=None)
 
-
-# Message
+# Message handlers
 async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
     processed_text: str = text.lower()
 
     greetings = ['hello', 'hi', 'hey', 'greetings']
-    goodbyes = ['bye', 'goodbye', 'farewell', 'see you later']
-    questions = ['how are you', 'what are you doing', 'how is your day']
-    compliments = ['you are awesome', 'great job', 'well done']
-    gratitude = ['thank you', 'thanks', 'appreciate it']
-    apologies = ['sorry', 'my apologies', 'excuse me']
-    affirmatives = ['yes', 'yeah', 'sure', 'absolutely']
-    negatives = ['no', 'not really', 'nevermind']
-    requests = ['please', 'can you', 'could you', 'help me with']
-    jokes = ['tell me a joke', 'make me laugh', 'joke time']
 
     for greeting in greetings:
         if greeting in processed_text:
             return "Hello! How can I assist you today?"
-
-    for goodbye in goodbyes:
-        if goodbye in processed_text:
-            return "Goodbye! Take care."
-
-    for question in questions:
-        if question in processed_text:
-            return "I'm just a computer program, but thanks for asking! How can I help you?"
-
-    for compliment in compliments:
-        if compliment in processed_text:
-            return "Thank you! I'm here to assist you. What can I do for you?"
-
-    for thank_you in gratitude:
-        if thank_you in processed_text:
-            return "You're welcome! If you have any more questions, feel free to ask."
-
-    for apology in apologies:
-        if apology in processed_text:
-            return "No need to apologize! How can I assist you?"
-
-    for affirmative in affirmatives:
-        if affirmative in processed_text:
-            return "Great! What can I do for you?"
-
-    for negative in negatives:
-        if negative in processed_text:
-            return "I see. If you change your mind, feel free to ask anything."
-
-    for request in requests:
-        if request in processed_text:
-            return "Certainly! I'll do my best to help. What do you need assistance with?"
-
-    for joke in jokes:
-        if joke in processed_text:
-            return "Why did the computer go to therapy? It had too many bytes of emotional baggage!"
-
-    return "Sorry, I don't understand what you mean."
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_type: str = update.message.chat.type
@@ -133,11 +78,130 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if message_type in ['group', 'private'] and BOT_USERNAME in text:
         await update.message.reply_text(response)
 
+async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("Handling photo...")
+    if not update.message.photo:
+        await update.message.reply_text("Please send an image.")
+        return
+
+    file = await context.bot.get_file(update.message.photo[-1].file_id)
+    file_path = f"images/{file.file_id}.jpg"
+    await file.download_to_drive(file_path)
+
+    await update.message.reply_text(f"Image saved successfully with ID: {file.file_id}")
+    await update.message.reply_text("Your image has been received and is being processed. Please wait...")
+
+    try:
+        with open(file_path, 'rb') as image_file:
+            files = {'file': ('image.jpg', image_file, 'image/jpeg')}
+            response = requests.post(FLASK_API_URL, files=files)
+
+        print(f"Response status code: {response.status_code}")
+        print(f"Response content: {response.content}")
+
+        if response.status_code == 200:
+            response_json = response.json()
+            image_id = response_json.get('image_id')
+            if not image_id:
+                await update.message.reply_text("Error: No image ID received from the server.")
+                return
+            await update.message.reply_text(f"Your image has been successfully uploaded with ID: {image_id}. Processing...")
+
+            result = await get_processing_results(image_id)
+
+            if result:
+                if isinstance(result, dict):
+                    disease = result.get('predicted_disease', 'Unknown')
+                    confidence = result.get('confidence', 'N/A')
+                    await update.message.reply_text(
+                        f"Plant detection result:\n"
+                        f"Predicted Disease: {disease}\n"
+                        f"Confidence: {confidence:.2f}"
+                    )
+                elif isinstance(result, str):
+                    await update.message.reply_text(f"Error: {result}")
+                else:
+                    await update.message.reply_text("Processing complete, but no specific result was returned.")
+            else:
+                await update.message.reply_text("No result received from the server after multiple attempts.")
+        else:
+            await update.message.reply_text(f"There was an error uploading your image. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Error processing image: {str(e)}")
+        await update.message.reply_text(f"An error occurred while processing your image: {str(e)}")
+    finally:
+        # Clean up by deleting the local file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+async def get_processing_results(image_id):
+    max_retries = 10
+    retry_delay = 2  # seconds
+    result_url = f"http://127.0.0.1:5000/result/{image_id}"
+
+    for _ in range(max_retries):
+        try:
+            response = requests.get(result_url)
+            print(f"Response status code: {response.status_code}")
+            print(f"Response content: {response.content}")
+            
+            if response.status_code == 200:
+                if response.content:
+                    result = response.json()
+                    if result.get('status') == 'completed':
+                        return result['result']
+                    elif result.get('status') == 'error':
+                        return f"Error: {result.get('message', 'Unknown error')}"
+                else:
+                    print("Empty response received")
+            elif response.status_code == 404:
+                return "Image not found"
+            await asyncio.sleep(retry_delay)
+        except Exception as e:
+            print(f"Error retrieving results: {str(e)}")
+            await asyncio.sleep(retry_delay)
+
+    return "No result received from the server after multiple attempts"
+
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'Update {update} caused error {context.error}')
 
-# Main
 
+async def get_result(update: Update, context):
+    if len(context.args) == 0:
+        await update.message.reply_text("Please provide an image ID. Usage: /result <image_id>")
+        return
+    image_id = context.args[0]
+    result_url = f"http://127.0.0.1:5000/result/{image_id}"
+    
+    try:
+        response = requests.get(result_url)
+        print(f"Response status code: {response.status_code}")
+        print(f"Response content: {response.content}")
+        
+        if response.status_code == 200:
+            if response.content:
+                result = response.json()
+                status = result.get('status', 'Unknown')
+                if status == 'completed':
+                    predicted_disease = result['result']['predicted_disease']
+                    confidence = result['result']['confidence']
+                    await update.message.reply_text(
+                        f"Image ID: {image_id}\n"
+                        f"Status: {status}\n"
+                        f"Predicted Disease: {predicted_disease}\n"
+                        f"Confidence: {confidence:.2f}"
+                    )
+                else:
+                    await update.message.reply_text(f"Image ID: {image_id}\nStatus: {status}")
+            else:
+                await update.message.reply_text("Error: Empty response received from server")
+        else:
+            await update.message.reply_text(f"Error: {response.text}")
+    except Exception as e:
+        await update.message.reply_text(f"Error: {str(e)}")
+        
+# Main function
 if __name__ == '__main__':
     print('Starting bot...')
     app = Application.builder().token(Token).build()
@@ -145,17 +209,20 @@ if __name__ == '__main__':
     # Commands
     app.add_handler(CommandHandler('start', start_command))
     app.add_handler(CommandHandler('help', help_command))
-    app.add_handler(CommandHandler('custom', custom_command))  # Corrected command name
+    app.add_handler(CommandHandler('custom', custom_command))
     app.add_handler(CommandHandler('quiz', quiz_command))
-
+    app.add_handler(CommandHandler("result", get_result))
     # Callback query handler
     app.add_handler(CallbackQueryHandler(callback_handler))
+
     # Messages
-    text_filter = filters.Text and ~filters.COMMAND
+    text_filter = filters.TEXT & ~filters.COMMAND
     app.add_handler(MessageHandler(text_filter, handle_message))
 
-    # Error
-    print("Polling...")
-    app.add_error_handler(error)
+    # Add the photo handler
+    app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
 
+    # Error handler
+    app.add_error_handler(error)
+    print("Polling...")
     app.run_polling(poll_interval=5)
