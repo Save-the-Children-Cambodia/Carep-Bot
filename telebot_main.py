@@ -144,7 +144,7 @@ class CarepBot:
                         await update.message.reply_text(
                             f"Plant detection result:\n"
                             f"Predicted Disease: {disease}\n"
-                            f"Confidence: {confidence:.2f}"
+                            f"Confidence: {confidence:.2f}\n"
                             f"Disease (Khmer): {disease_km}\n"
                             f"Cure: {cure}\n"
                             f"Symptoms: {symptoms}\n"
