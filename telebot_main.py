@@ -4,6 +4,8 @@ import asyncio
 from typing import Final
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
+import json
+
 
 class CarepBot:
     Token: Final = "6774761124:AAEBNfmTgmcJ6wbtL1zZKGAV0_xjifDmNfE"
@@ -134,10 +136,19 @@ class CarepBot:
                     if isinstance(result, dict):
                         disease = result.get('predicted_disease', 'Unknown')
                         confidence = result.get('confidence', 'N/A')
+                        details = result.get('details', {})
+                        disease_km = details.get('disease_km', 'Unknown')
+                        cure = details.get('cure', 'Not provided')
+                        symptoms = details.get('symtom', 'Not provided')
+                        reference = details.get('reference', 'Not provided')
                         await update.message.reply_text(
                             f"Plant detection result:\n"
                             f"Predicted Disease: {disease}\n"
                             f"Confidence: {confidence:.2f}"
+                            f"Disease (Khmer): {disease_km}\n"
+                            f"Cure: {cure}\n"
+                            f"Symptoms: {symptoms}\n"
+                            f"Reference: {reference}"
                         )
                     elif isinstance(result, str):
                         await update.message.reply_text(f"Error: {result}")
@@ -191,6 +202,7 @@ class CarepBot:
         if len(context.args) == 0:
             await update.message.reply_text("Please provide an image ID. Usage: /result <image_id>")
             return
+
         image_id = context.args[0]
         result_url = f"{self.FLASK_API_URL.rsplit('/', 1)[0]}/result/{image_id}"
         
@@ -201,16 +213,23 @@ class CarepBot:
             
             if response.status_code == 200:
                 if response.content:
-                    result = response.json()
+                    # Decode the JSON response content with unicode escape
+                    result = json.loads(response.content.decode('unicode_escape'))
+                    
                     status = result.get('status', 'Unknown')
                     if status == 'completed':
                         predicted_disease = result['result']['predicted_disease']
                         confidence = result['result']['confidence']
+                        details = result['result']['details']
                         await update.message.reply_text(
                             f"Image ID: {image_id}\n"
                             f"Status: {status}\n"
                             f"Predicted Disease: {predicted_disease}\n"
-                            f"Confidence: {confidence:.2f}"
+                            f"Confidence: {confidence:.2f}\n"
+                            f"Disease (Khmer): {details.get('disease_km', 'N/A')}\n"
+                            f"Cure: {details.get('cure', 'N/A')}\n"
+                            f"Symptoms: {details.get('symtom', 'N/A')}\n"
+                            f"Reference: {details.get('reference', 'N/A')}"
                         )
                     else:
                         await update.message.reply_text(f"Image ID: {image_id}\nStatus: {status}")
@@ -220,7 +239,6 @@ class CarepBot:
                 await update.message.reply_text(f"Error: {response.text}")
         except Exception as e:
             await update.message.reply_text(f"Error: {str(e)}")
-        
     def run(self):
         print('Starting bot...')
         print("Polling...")
