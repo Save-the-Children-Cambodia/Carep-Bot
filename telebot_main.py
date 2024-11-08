@@ -14,6 +14,7 @@ class CarepBot:
     Token: Final = os.getenv('TOKEN')
     BOT_USERNAME: Final = os.getenv('BOT_USERNAME')
     FLASK_API_URL = os.getenv('FLASK_API_URL')
+    APP_URL = 'https://powerful-ocean-90823.herokuapp.com/' + Token
 
     def __init__(self):
         self.app = Application.builder().token(self.Token).build()
@@ -249,6 +250,19 @@ class CarepBot:
     def run(self):
         print('Starting bot...')
         print("Polling...")
+
+        application = Application.builder().token(self.Token).build()
+
+        # Add command handler
+        application.add_handler(CommandHandler('start', start))
+
+        # Webhook setup
+        application.run_webhook(
+        listen="0.0.0.0",  # Required for Heroku
+        port=int(os.environ.get("PORT", "5000")),
+        url_path=self.Token
+        )
+        application.bot.set_webhook(self.APP_URL)
         self.app.run_polling(poll_interval=5)
 
 if __name__ == '__main__':
