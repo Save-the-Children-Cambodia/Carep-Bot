@@ -1,5 +1,6 @@
 import os
 import requests
+from dotenv import load_dotenv
 import asyncio
 from typing import Final
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
@@ -7,10 +8,12 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import json
 
 
+load_dotenv()
+
 class CarepBot:
-    Token: Final = "6774761124:AAEBNfmTgmcJ6wbtL1zZKGAV0_xjifDmNfE"
-    BOT_USERNAME: Final = "@panhathun_bot"
-    FLASK_API_URL = "http://127.0.0.1:5000/upload"
+    Token: Final = os.getenv('TOKEN')
+    BOT_USERNAME: Final = os.getenv('BOT_USERNAME')
+    FLASK_API_URL = os.getenv('FLASK_API_URL')
 
     def __init__(self):
         self.app = Application.builder().token(self.Token).build()
