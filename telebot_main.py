@@ -14,7 +14,7 @@ class CarepBot:
     Token: Final = os.getenv('TOKEN')
     BOT_USERNAME: Final = os.getenv('BOT_USERNAME')
     FLASK_API_URL = os.getenv('FLASK_API_URL')
-    APP_URL = 'https://powerful-ocean-90823.herokuapp.com/' + Token
+    APP_URL = os.getenv('APP_URL' + Token)
 
     def __init__(self):
         self.app = Application.builder().token(self.Token).build()
@@ -252,9 +252,6 @@ class CarepBot:
         print("Polling...")
 
         application = Application.builder().token(self.Token).build()
-
-        # Add command handler
-        application.add_handler(CommandHandler('start', start))
 
         # Webhook setup
         application.run_webhook(

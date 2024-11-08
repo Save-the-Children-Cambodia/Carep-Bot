@@ -1,3 +1,3 @@
- python-telegram-bot==20.3
- web: python3 telebot_main.py
- python-telegram-bot[webhooks]
+python-dotenv==1.0.1
+python-telegram-bot==21.6
+python-telegram-bot[webhooks]
