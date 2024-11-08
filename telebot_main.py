@@ -14,7 +14,6 @@ class CarepBot:
     Token: Final = os.getenv('TOKEN')
     BOT_USERNAME: Final = os.getenv('BOT_USERNAME')
     FLASK_API_URL = os.getenv('FLASK_API_URL')
-    APP_URL = os.getenv('APP_URL' + Token)
 
     def __init__(self):
         self.app = Application.builder().token(self.Token).build()
