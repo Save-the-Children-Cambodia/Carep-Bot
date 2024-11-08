@@ -141,10 +141,11 @@ class CarepBot:
                         cure = details.get('cure', 'Not provided')
                         symptoms = details.get('symtom', 'Not provided')
                         reference = details.get('reference', 'Not provided')
+                        confidences = confidence*100
                         await update.message.reply_text(
                             f"Plant detection result:\n"
                             f"Predicted Disease: {disease}\n"
-                            f"Confidence: {confidence:.2f}\n"
+                            f"Confidence: {confidences:.2f}%\n"
                             f"Disease (Khmer): {disease_km}\n"
                             f"Cure: {cure}\n"
                             f"Symptoms: {symptoms}\n"
@@ -221,11 +222,12 @@ class CarepBot:
                         predicted_disease = result['result']['predicted_disease']
                         confidence = result['result']['confidence']
                         details = result['result']['details']
+                        confidences = confidence*100
                         await update.message.reply_text(
                             f"Image ID: {image_id}\n"
                             f"Status: {status}\n"
                             f"Predicted Disease: {predicted_disease}\n"
-                            f"Confidence: {confidence:.2f}\n"
+                            f"Confidence: {confidences:.2f}%\n"
                             f"Disease (Khmer): {details.get('disease_km', 'N/A')}\n"
                             f"Cure: {details.get('cure', 'N/A')}\n"
                             f"Symptoms: {details.get('symtom', 'N/A')}\n"
