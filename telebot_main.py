@@ -23,6 +23,8 @@ class CarepBot:
         if not os.path.exists("images"):
             os.makedirs("images")
 
+            #h
+
     def setup_handlers(self):
         # Commands
         self.app.add_handler(CommandHandler('start', self.start_command))
