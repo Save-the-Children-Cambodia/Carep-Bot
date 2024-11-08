@@ -14,6 +14,30 @@ class CarepBot:
     Token: Final = os.getenv('TOKEN')
     BOT_USERNAME: Final = os.getenv('BOT_USERNAME')
     FLASK_API_URL = os.getenv('FLASK_API_URL')
+    # WEBHOOK_URL = os.getenv('WEBHOOK_URL')
+    # PORT = os.getenv('PORT')
+
+    def __init__(self):
+        # Use environment variables to set token and URLs
+        self.Token: Final = os.getenv('TOKEN')  # Bot token from environment
+        self.BOT_USERNAME: Final = os.getenv('BOT_USERNAME')  # Bot username from environment
+        self.FLASK_API_URL = os.getenv('FLASK_API_URL')  # Flask API URL from environment
+        self.PORT = int(os.getenv('PORT', '5000'))
+        self.WEBHOOK_URL = f"{self.FLASK_API_URL}/{self.Token}"
+    def run(self):
+        # Create application with bot token
+        application = Application.builder().token(self.Token).build()
+
+        # Webhook setup
+        application.run_webhook(
+            listen="0.0.0.0",  
+            port=self.PORT, 
+            url_path=self.Token 
+        )
+        
+        # Set webhook with the complete Flask API URL
+        application.bot.set_webhook(url=self.WEBHOOK_URL)
+
 
     def __init__(self):
         self.app = Application.builder().token(self.Token).build()
@@ -250,15 +274,15 @@ class CarepBot:
         print('Starting bot...')
         print("Polling...")
 
-        application = Application.builder().token(self.Token).build()
+        # application = Application.builder().token(self.Token).build()
 
-        # Webhook setup
-        application.run_webhook(
-        listen="0.0.0.0",  # Required for Heroku
-        port=int(os.environ.get("PORT", "5000")),
-        url_path=self.Token
-        )
-        application.bot.set_webhook(self.APP_URL)
+        # # Webhook setup
+        # application.run_webhook(
+        # listen="0.0.0.0",  # Required for Heroku
+        # port=int(os.environ.get("PORT", "5000")),
+        # url_path=self.Token
+        # )
+        # application.bot.set_webhook(self.APP_URL)
         self.app.run_polling(poll_interval=5)
 
 if __name__ == '__main__':
