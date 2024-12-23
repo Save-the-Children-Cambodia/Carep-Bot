@@ -11,16 +11,9 @@ import json
 load_dotenv()
 
 class CarepBot:
-<<<<<<< HEAD
-    Token: Final = "6653993823:AAGm3i9j20c2G2XhQhzRiTjcsKXlZymrLXs"
-    BOT_USERNAME: Final = "@nhacool_bot"
-    FLASK_API_URL = "http://127.0.0.1:5000/upload"
-=======
     Token: Final = os.getenv('TOKEN')
     BOT_USERNAME: Final = os.getenv('BOT_USERNAME')
     FLASK_API_URL = os.getenv('FLASK_API_URL')
->>>>>>> refs/remotes/origin/main
-
     def __init__(self):
         self.app = Application.builder().token(self.Token).build()
         self.setup_handlers()
