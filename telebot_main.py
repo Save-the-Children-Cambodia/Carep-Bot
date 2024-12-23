@@ -1,5 +1,6 @@
 import os
 import requests
+from dotenv import load_dotenv
 import asyncio
 from typing import Final
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
@@ -7,10 +8,18 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import json
 
 
+load_dotenv()
+
 class CarepBot:
+<<<<<<< HEAD
     Token: Final = "6653993823:AAGm3i9j20c2G2XhQhzRiTjcsKXlZymrLXs"
     BOT_USERNAME: Final = "@nhacool_bot"
     FLASK_API_URL = "http://127.0.0.1:5000/upload"
+=======
+    Token: Final = os.getenv('TOKEN')
+    BOT_USERNAME: Final = os.getenv('BOT_USERNAME')
+    FLASK_API_URL = os.getenv('FLASK_API_URL')
+>>>>>>> refs/remotes/origin/main
 
     def __init__(self):
         self.app = Application.builder().token(self.Token).build()
@@ -19,6 +28,8 @@ class CarepBot:
         # Create a directory to save images
         if not os.path.exists("images"):
             os.makedirs("images")
+
+            #h
 
     def setup_handlers(self):
         # Commands
@@ -141,10 +152,11 @@ class CarepBot:
                         cure = details.get('cure', 'Not provided')
                         symptoms = details.get('symtom', 'Not provided')
                         reference = details.get('reference', 'Not provided')
+                        confidences = confidence*100
                         await update.message.reply_text(
                             f"Plant detection result:\n"
                             f"Predicted Disease: {disease}\n"
-                            f"Confidence: {confidence:.2f}\n"
+                            f"Confidence: {confidences:.2f}%\n"
                             f"Disease (Khmer): {disease_km}\n"
                             f"Cure: {cure}\n"
                             f"Symptoms: {symptoms}\n"
@@ -221,11 +233,12 @@ class CarepBot:
                         predicted_disease = result['result']['predicted_disease']
                         confidence = result['result']['confidence']
                         details = result['result']['details']
+                        confidences = confidence*100
                         await update.message.reply_text(
                             f"Image ID: {image_id}\n"
                             f"Status: {status}\n"
                             f"Predicted Disease: {predicted_disease}\n"
-                            f"Confidence: {confidence:.2f}\n"
+                            f"Confidence: {confidences:.2f}%\n"
                             f"Disease (Khmer): {details.get('disease_km', 'N/A')}\n"
                             f"Cure: {details.get('cure', 'N/A')}\n"
                             f"Symptoms: {details.get('symtom', 'N/A')}\n"
@@ -242,6 +255,16 @@ class CarepBot:
     def run(self):
         print('Starting bot...')
         print("Polling...")
+
+        application = Application.builder().token(self.Token).build()
+
+        # Webhook setup
+        application.run_webhook(
+        listen="0.0.0.0",  # Required for Heroku
+        port=int(os.environ.get("PORT", "5000")),
+        url_path=self.Token
+        )
+        application.bot.set_webhook(self.APP_URL)
         self.app.run_polling(poll_interval=5)
 
 if __name__ == '__main__':

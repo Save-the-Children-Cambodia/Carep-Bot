@@ -1,2 +1,4 @@
 python-telegram-bot
 telegram
+web: python your_bot_file.py
+python-telegram-bot[webhooks]
