@@ -249,15 +249,7 @@ class CarepBot:
         print('Starting bot...')
         print("Polling...")
 
-        application = Application.builder().token(self.Token).build()
-
-        # Webhook setup
-        application.run_webhook(
-        listen="0.0.0.0",  # Required for Heroku
-        port=int(os.environ.get("PORT", "5000")),
-        url_path=self.Token
-        )
-        application.bot.set_webhook(self.APP_URL)
+    
         self.app.run_polling(poll_interval=5)
 
 if __name__ == '__main__':
