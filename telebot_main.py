@@ -8,8 +8,8 @@ import json
 
 
 class CarepBot:
-    Token: Final = "6774761124:AAEBNfmTgmcJ6wbtL1zZKGAV0_xjifDmNfE"
-    BOT_USERNAME: Final = "@panhathun_bot"
+    Token: Final = "6653993823:AAGm3i9j20c2G2XhQhzRiTjcsKXlZymrLXs"
+    BOT_USERNAME: Final = "@nhacool_bot"
     FLASK_API_URL = "http://127.0.0.1:5000/upload"
 
     def __init__(self):
