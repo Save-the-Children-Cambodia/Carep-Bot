@@ -24,30 +24,15 @@ class CarepBot:
         self.FLASK_API_URL = os.getenv('FLASK_API_URL')  # Flask API URL from environment
         self.PORT = int(os.getenv('PORT', '5000'))
         self.WEBHOOK_URL = f"{self.FLASK_API_URL}/{self.Token}"
-    def run(self):
-        # Create application with bot token
-        application = Application.builder().token(self.Token).build()
 
-        # Webhook setup
-        application.run_webhook(
-            listen="0.0.0.0",  
-            port=self.PORT, 
-            url_path=self.Token 
-        )
-        
-        # Set webhook with the complete Flask API URL
-        application.bot.set_webhook(url=self.WEBHOOK_URL)
+        self.user_data = {}  # To store user answers temporarily
 
-
-    def __init__(self):
         self.app = Application.builder().token(self.Token).build()
         self.setup_handlers()
 
         # Create a directory to save images
         if not os.path.exists("images"):
             os.makedirs("images")
-
-            #h
 
     def setup_handlers(self):
         # Commands
@@ -71,15 +56,83 @@ class CarepBot:
         self.app.add_error_handler(self.error)
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        keyboard = [
-            ["Video", "Image", "Document", "Audio"]
-        ]
-        reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False)
+        user_id = update.message.chat.id
+        self.user_data[user_id] = {'step': 'Sex'}  # Initialize the user's questionnaire step
 
+        # Ask the first question
         await update.message.reply_text(
-            "Welcome! Please select an area of interest or send me an image and I will save it.",
-            reply_markup=reply_markup
+            "តើអ្នកមានភេទអ្វី",
+            reply_markup=ReplyKeyboardMarkup([['ប្រុស', 'ស្រី', 'មិនបញ្ជាក់']],resize_keyboard=True ,one_time_keyboard=True)
         )
+
+    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user_id = update.message.chat.id
+        text = update.message.text.strip()
+
+        if user_id not in self.user_data or 'step' not in self.user_data[user_id]:
+            await update.message.reply_text("Please use /start to begin.")
+            return
+
+        # Get the user's current step
+        step = self.user_data[user_id]['step']
+
+        if step == 'Sex':
+            gender_mapping = {
+                    'ប្រុស': 'Male',
+                    'ស្រី': 'Female',
+                    'មិនបញ្ជាក់': 'Non Specific'
+                }
+            #if they input another word different from gender_mapping will show សូមជ្រើសរើសភេទ
+            if text not in gender_mapping:
+                await update.message.reply_text("សូមជ្រើសរើសភេទ \"ប្រុស\" \"ស្រី\" ឬ \"មិនបញ្ជាក់\"។")
+                return
+            self.user_data[user_id]['Sex'] = gender_mapping[text]
+            self.user_data[user_id]['step'] = 'Age'
+            await update.message.reply_text(
+                "What is your Age range? (0-10, 11-18, 19-25, 26-45, 46-60, 60+)",
+                reply_markup=ReplyKeyboardMarkup([['0-10', '11-18'], ['19-25', '26-45'], ['46-60', '60+']], resize_keyboard=True, one_time_keyboard=True)
+            )
+        elif step == 'Age':
+            if text not in ['0-10', '11-18', '19-25', '26-45', '46-60', '60+']:
+                await update.message.reply_text("Please select a valid Age range.")
+                return
+            self.user_data[user_id]['Age'] = text
+            self.user_data[user_id]['step'] = 'Province'
+            await update.message.reply_text(
+                "Which Province are you from?",
+                reply_markup=ReplyKeyboardMarkup(
+                    [
+                        ["ភ្នំពេញ", "កំពង់ចាម", "កោះកុង", "កំពង់ឆ្នាំ", "បាត់ដំបង"],
+                        ["កំពង់ធំ", "កំពត", "កណ្ដាល", "កែប", "កំពង់ស្ពឺ"],
+                        ["ក្រចេះ", "មណ្ឌលគីរី", "ឧត្ដរមានជ័យ", "ប៉ៃលិន", "បន្ទាយមានជ័យ"],
+                        ["ព្រះសីហនុ", "ព្រះវិហារ", "ព្រៃវែង", "ពោធិ៍សាត់", "រតនគីរី"],
+                        ["សៀមរាប", "ស្ទឹងត្រែង", "ស្វាយរៀង", "តាកែវ", "ត្បូងឃ្មុំ"],
+                    ],resize_keyboard=True, one_time_keyboard=True)
+            )
+
+        elif step == 'Province':
+            province_mapping = {
+                    'ភ្នំពេញ': 'Phnom Penh', 'កំពង់ចាម': 'Kampong Cham', 'កោះកុង': 'Koh Kong', 'កំពង់ឆ្នាំ': 'Kampong Chhnang',
+                    'បាត់ដំបង': 'Battambang', 'កំពង់ធំ': 'Kampong Thom', 'កំពត': 'Kampot', 'កណ្ដាល': 'Kandal',
+                    'កែប': 'Kep', 'កំពង់ស្ពឺ': 'Kampong Speu', 'ក្រចេះ': 'Kratié', 'មណ្ឌលគីរី': 'Mondulkiri',
+                    'ឧត្ដរមានជ័យ': 'Oddar Meanchey', 'ប៉ៃលិន': 'Pailin', 'បន្ទាយមានជ័យ': 'Banteay Meanchey',
+                    'ព្រះសីហនុ': 'Preah Sihanouk', 'ព្រះវិហារ': 'Preah Vihear', 'ព្រៃវែង': 'Prey Veng',
+                    'ពោធិ៍សាត់': 'Pursat', 'រតនគីរី': 'Ratanakiri', 'សៀមរាប': 'Siem Reap', 'ស្ទឹងត្រែង': 'Stung Treng',
+                    'ស្វាយរៀង': 'Svay Rieng', 'តាកែវ': 'Takeo', 'ត្បូងឃ្មុំ': 'Tbong Khmum'
+                }
+            if text not in province_mapping:
+                await update.message.reply_text("Please select a valid Province.")
+                return
+            self.user_data[user_id]['Province'] = province_mapping[text]
+            self.user_data[user_id]['step'] = 'done'
+
+            # Questionnaire complete
+            await update.message.reply_text("Thank you! You can now interact with the bot.")
+            print(f"User Data: {self.user_data[user_id]}")  # For debugging/logging
+
+        elif self.user_data[user_id]['step'] == 'done':
+            # User has completed the questionnaire; handle other messages
+            await update.message.reply_text("How can I assist you today?")
 
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("I'm Thun Bot, here to assist you. You can ask me anything or use the available commands.")
@@ -110,25 +163,7 @@ class CarepBot:
 
         await query.message.edit_reply_markup(reply_markup=None)
 
-    async def handle_response(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
-        processed_text: str = text.lower()
-
-        greetings = ['hello', 'hi', 'hey', 'greetings']
-
-        for greeting in greetings:
-            if greeting in processed_text:
-                return "Hello! How can I assist you today?"
-
-    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        message_type: str = update.message.chat.type
-        text: str = update.message.text.lower()
-
-        print(f'User ({update.message.chat.id}) in {message_type}: "{text}"')
-        response = await self.handle_response(update, context, text)
-        if response:
-            await update.message.reply_text(response)
-        if message_type in ['group', 'private'] and self.BOT_USERNAME in text:
-            await update.message.reply_text(response)
+        
 
     async def handle_photo(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         print("Handling photo...")
@@ -147,7 +182,7 @@ class CarepBot:
             with open(file_path, 'rb') as image_file:
                 files = {'file': ('image.jpg', image_file, 'image/jpeg')}
                 response = requests.post(self.FLASK_API_URL, files=files)
-
+            
             print(f"Response status code: {response.status_code}")
             print(f"Response content: {response.content}")
 
@@ -235,12 +270,10 @@ class CarepBot:
 
         image_id = context.args[0]
         result_url = f"{self.FLASK_API_URL.rsplit('/', 1)[0]}/result/{image_id}"
-        
         try:
             response = requests.get(result_url)
             print(f"Response status code: {response.status_code}")
             print(f"Response content: {response.content}")
-            
             if response.status_code == 200:
                 if response.content:
                     # Decode the JSON response content with unicode escape
